@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Lets quizz app
 
 React simple quizz all that uses reducer hook and contex api
 
