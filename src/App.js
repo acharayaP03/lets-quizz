@@ -1,8 +1,15 @@
 import { useEffect, useReducer } from 'react';
-import { Header, StartQuizz, Question, Progress } from './components';
+import { Header, StartQuizz, Question, Progress, FinishQuiz } from './components';
 import Main from './layouts/main';
 import { Loader, Error, NextButton } from './ui-components';
-const initialState = { questions: [], status: 'loading', index: 0, answer: null, points: 0 };
+const initialState = {
+	questions: [],
+	status: 'loading',
+	index: 0,
+	answer: null,
+	points: 0,
+	highscore: 0,
+};
 
 function reducer(state, action) {
 	switch (action.type) {
@@ -36,13 +43,25 @@ function reducer(state, action) {
 				index: state.index + 1,
 				answer: null,
 			};
+		case 'finish':
+			return {
+				...state,
+				status: 'finished',
+				highscore: state.points > state.highscore ? state.points : state.highscore,
+			};
+		case 'restart':
+			return {
+				...initialState,
+				status: 'ready',
+				questions: state.questions,
+			};
 		default:
 			throw new Error(`Unrecognized action: ${action.type}`);
 	}
 }
 
 function App() {
-	const [{ questions, status, index, answer, points }, dispatch] = useReducer(
+	const [{ questions, status, index, answer, points, highscore }, dispatch] = useReducer(
 		reducer,
 		initialState,
 	);
@@ -68,7 +87,7 @@ function App() {
 				{status === 'error' && <Error />}
 
 				{status === 'ready' && <StartQuizz totalQuestions={totalQuestions} dispatch={dispatch} />}
-				{console.log(status)}
+
 				{status === 'active' && (
 					<>
 						<Progress
@@ -79,8 +98,21 @@ function App() {
 							answer={answer}
 						/>
 						<Question question={questions[index]} dispatch={dispatch} answer={answer} />
-						<NextButton dispatch={dispatch} answer={answer} />
+						<NextButton
+							dispatch={dispatch}
+							answer={answer}
+							index={index}
+							numQuestions={totalQuestions}
+						/>
 					</>
+				)}
+				{status === 'finished' && (
+					<FinishQuiz
+						points={points}
+						totalMaxPoints={totalMaxPoints}
+						highscore={highscore}
+						dispatch={dispatch}
+					/>
 				)}
 			</Main>
 		</div>
