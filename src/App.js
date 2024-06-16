@@ -1,8 +1,8 @@
 import { useEffect, useReducer } from 'react';
-import { Header, StartQuizz } from './components';
+import { Header, StartQuizz, Question } from './components';
 import Main from './layouts/main';
 import { Loader, Error } from './ui-components';
-const initialState = { questions: [], status: 'loading' };
+const initialState = { questions: [], status: 'loading', index: 0, answer: null, points: 0 };
 
 function reducer(state, action) {
 	switch (action.type) {
@@ -12,24 +12,41 @@ function reducer(state, action) {
 				questions: action.payload,
 				status: 'ready',
 			};
-		case 'error':
+		case 'start':
+			return {
+				...state,
+				status: 'active',
+			};
+		case 'dataFailed':
 			return {
 				...state,
 				status: 'error',
+			};
+		case 'newAnswer':
+			const question = state.questions[state.index];
+			return {
+				...state,
+				answer: action.payload,
+				points:
+					action.payload === question.correctOption ? state.points + question.points : state.points,
 			};
 		default:
 			throw new Error(`Unrecognized action: ${action.type}`);
 	}
 }
+
 function App() {
-	const [{ questions, status }, dispatch] = useReducer(reducer, initialState);
+	const [{ questions, status, index, answer }, dispatch] = useReducer(reducer, initialState);
+
+	//computed props
+	const totalQuestions = questions.length;
 
 	useEffect(function () {
 		fetch('http://localhost:9000/questions')
 			.then((res) => res.json())
 			.then((data) => dispatch({ type: 'dataReceived', payload: data }))
-			.catch(() => dispatch({ type: 'error' }));
-	});
+			.catch(() => dispatch({ type: 'dataFailed' }));
+	}, []);
 	return (
 		<div className='app'>
 			<Header />
@@ -37,7 +54,11 @@ function App() {
 				{status === 'loading' && <Loader />}
 				{status === 'error' && <Error />}
 
-				{status === 'ready' && <StartQuizz />}
+				{status === 'ready' && <StartQuizz totalQuestions={totalQuestions} dispatch={dispatch} />}
+				{console.log(status)}
+				{status === 'active' && (
+					<Question question={questions[index]} dispatch={dispatch} answer={answer} />
+				)}
 			</Main>
 		</div>
 	);
