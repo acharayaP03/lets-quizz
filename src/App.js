@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react';
 import { Header, StartQuizz, Question } from './components';
 import Main from './layouts/main';
-import { Loader, Error } from './ui-components';
+import { Loader, Error, NextButton } from './ui-components';
 const initialState = { questions: [], status: 'loading', index: 0, answer: null, points: 0 };
 
 function reducer(state, action) {
@@ -30,6 +30,12 @@ function reducer(state, action) {
 				points:
 					action.payload === question.correctOption ? state.points + question.points : state.points,
 			};
+		case 'nextQuestion':
+			return {
+				...state,
+				index: state.index + 1,
+				answer: null,
+			};
 		default:
 			throw new Error(`Unrecognized action: ${action.type}`);
 	}
@@ -57,7 +63,10 @@ function App() {
 				{status === 'ready' && <StartQuizz totalQuestions={totalQuestions} dispatch={dispatch} />}
 				{console.log(status)}
 				{status === 'active' && (
-					<Question question={questions[index]} dispatch={dispatch} answer={answer} />
+					<>
+						<Question question={questions[index]} dispatch={dispatch} answer={answer} />
+						<NextButton dispatch={dispatch} answer={answer} />
+					</>
 				)}
 			</Main>
 		</div>
