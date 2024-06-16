@@ -1,6 +1,7 @@
 import { useEffect, useReducer } from 'react';
-import { Header, StartQuizz, Question, Progress, FinishQuiz } from './components';
+import { Header, StartQuizz, Question, Progress, FinishQuiz, Timer } from './components';
 import Main from './layouts/main';
+import Footer from './layouts/footer';
 import { Loader, Error, NextButton } from './ui-components';
 const initialState = {
 	questions: [],
@@ -9,7 +10,9 @@ const initialState = {
 	answer: null,
 	points: 0,
 	highscore: 0,
+	timeRemaining: null,
 };
+const SEC_PER_QUESTION = 30;
 
 function reducer(state, action) {
 	switch (action.type) {
@@ -23,6 +26,7 @@ function reducer(state, action) {
 			return {
 				...state,
 				status: 'active',
+				timeRemaining: state.questions.length * SEC_PER_QUESTION,
 			};
 		case 'dataFailed':
 			return {
@@ -55,16 +59,20 @@ function reducer(state, action) {
 				status: 'ready',
 				questions: state.questions,
 			};
+		case 'tick':
+			return {
+				...state,
+				timeRemaining: state.timeRemaining - 1,
+				status: state.timeRemaining === 0 ? 'finished' : state.status,
+			};
 		default:
 			throw new Error(`Unrecognized action: ${action.type}`);
 	}
 }
 
 function App() {
-	const [{ questions, status, index, answer, points, highscore }, dispatch] = useReducer(
-		reducer,
-		initialState,
-	);
+	const [{ questions, status, index, answer, points, highscore, timeRemaining }, dispatch] =
+		useReducer(reducer, initialState);
 
 	//computed props
 	const totalQuestions = questions.length;
@@ -98,12 +106,16 @@ function App() {
 							answer={answer}
 						/>
 						<Question question={questions[index]} dispatch={dispatch} answer={answer} />
-						<NextButton
-							dispatch={dispatch}
-							answer={answer}
-							index={index}
-							numQuestions={totalQuestions}
-						/>
+						<Footer>
+							<Timer dispatch={dispatch} timeRemaining={timeRemaining} />
+
+							<NextButton
+								dispatch={dispatch}
+								answer={answer}
+								index={index}
+								numQuestions={totalQuestions}
+							/>
+						</Footer>
 					</>
 				)}
 				{status === 'finished' && (
