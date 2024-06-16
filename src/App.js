@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react';
-import { Header, StartQuizz, Question } from './components';
+import { Header, StartQuizz, Question, Progress } from './components';
 import Main from './layouts/main';
 import { Loader, Error, NextButton } from './ui-components';
 const initialState = { questions: [], status: 'loading', index: 0, answer: null, points: 0 };
@@ -42,10 +42,17 @@ function reducer(state, action) {
 }
 
 function App() {
-	const [{ questions, status, index, answer }, dispatch] = useReducer(reducer, initialState);
+	const [{ questions, status, index, answer, points }, dispatch] = useReducer(
+		reducer,
+		initialState,
+	);
 
 	//computed props
 	const totalQuestions = questions.length;
+	const totalMaxPoints = questions.reduce(
+		(previounPoints, question) => previounPoints + question.points,
+		0,
+	);
 
 	useEffect(function () {
 		fetch('http://localhost:9000/questions')
@@ -64,6 +71,13 @@ function App() {
 				{console.log(status)}
 				{status === 'active' && (
 					<>
+						<Progress
+							index={index}
+							numQuestions={totalQuestions}
+							points={points}
+							totalMaxPoints={totalMaxPoints}
+							answer={answer}
+						/>
 						<Question question={questions[index]} dispatch={dispatch} answer={answer} />
 						<NextButton dispatch={dispatch} answer={answer} />
 					</>
